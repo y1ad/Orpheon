@@ -4,6 +4,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.music.spotui.data.entity.SongsModel
+import com.music.spotui.dj.DjManager
 
 class CurrentSongState constructor() {
     private val _title: MutableState<String> = mutableStateOf("")
@@ -72,6 +73,7 @@ class CurrentSongState constructor() {
     }
 
     fun updateSongState(coverUri: String, title: String, singer: String, playingState: Boolean, songId : Int, songIndex : Int, album : String) {
+        val songChanged = songId != _songId.value || title != _title.value
         _coverUri.value = coverUri
         _title.value = title
         _album.value = album
@@ -79,5 +81,14 @@ class CurrentSongState constructor() {
         _playingState.value = playingState
         _songIndex.value = songIndex
         _songId.value = songId
+
+        // Native DJ: speak when a new track starts (only if actually playing)
+        if (songChanged && playingState && title.isNotBlank()) {
+            DjManager.onTrackStarted(
+                title = title,
+                artist = singer,
+                album = album.takeIf { it.isNotBlank() }
+            )
+        }
     }
 }
