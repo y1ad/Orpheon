@@ -39,6 +39,8 @@ object DjManager : TextToSpeech.OnInitListener {
     var enabled by mutableStateOf(true)
         private set
 
+    // @JvmName avoids a JVM signature clash with the property's generated setter.
+    @JvmName("applyEnabled")
     fun setEnabled(value: Boolean) {
         enabled = value
         prefs()?.edit()?.putBoolean(KEY_ENABLED, value)?.apply()
@@ -48,6 +50,7 @@ object DjManager : TextToSpeech.OnInitListener {
     var djName by mutableStateOf("Dj Eyal")
         private set
 
+    @JvmName("applyDjName")
     fun setDjName(value: String) {
         val clean = value.trim().ifEmpty { "Dj Eyal" }
         djName = clean
@@ -58,6 +61,7 @@ object DjManager : TextToSpeech.OnInitListener {
     var chatty by mutableStateOf(3)
         private set
 
+    @JvmName("applyChatty")
     fun setChatty(value: Int) {
         val v = value.coerceIn(1, 5)
         chatty = v
@@ -74,7 +78,7 @@ object DjManager : TextToSpeech.OnInitListener {
     }
 
     private fun ensureTts() {
-       if (tts != null) return
+        if (tts != null) return
         try {
             tts = TextToSpeech(Graph.app, this)
         } catch (_: Exception) {
@@ -135,14 +139,14 @@ object DjManager : TextToSpeech.OnInitListener {
         if (shouldGreet) lastGreeted = now
 
         val text = buildComment(
-            title = title?.takeIf { it.isNotBlank } ?: return,
-            artist = artist?.takeIf { it.isNotBlank } ?: "",
+            title = title?.takeIf { it.isNotBlank() } ?: return,
+            artist = artist?.takeIf { it.isNotBlank() } ?: "",
             album = album,
             year = year,
             bpm = bpm,
             greet = shouldGreet
         )
-        speak( text )
+        speak(text)
     }
 
     private fun buildComment(
@@ -212,8 +216,8 @@ object DjManager : TextToSpeech.OnInitListener {
             override fun onStart(utteranceId: String?) {}
             override fun onDone(utteranceId: String?) {}
             @Deprecated("Deprecated in Java")
-           override fun onError(utteranceId: String?) {}
-           override fun onError(utteranceId: String?, errorCode: Int) {}
+            override fun onError(utteranceId: String?) {}
+            override fun onError(utteranceId: String?, errorCode: Int) {}
         })
 
         engine.speak(text, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
