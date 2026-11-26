@@ -32,7 +32,7 @@ object DjManager : TextToSpeech.OnInitListener {
 
     /** Whether the native DJ is enabled. */
     var enabled by mutableStateOf(
-        Graph.app.getSharedPreferences(PREFS, 0).getBoolean(KEY_ENABLED, false)
+        Graph.app.getSharedPreferences(PREFS, 0).getBoolean(KEY_ENABLED, true)
     )
         private set
 
@@ -111,7 +111,6 @@ object DjManager : TextToSpeech.OnInitListener {
         if (!enabled) return
         ensureTts()
         if (!ready) return
-
         songCount++
         val now = System.currentTimeMillis()
         val shouldGreet = now - lastGreeted > 6 * 3600_000L // every 6 hours
@@ -146,11 +145,11 @@ object DjManager : TextToSpeech.OnInitListener {
 
         if (greet) {
             parts += if (es) {
-                "Hola, soy $djName. Te voy a acompanar con la música."
+                "Hola, soy $djName. Te voy a acompanar con la mõsica."
             } else {
                 "Hi, I'm $djName. I'll be keeping you company with the music."
             }
-    }
+        }
 
         val introsEs = listOf(
             "Ahora suena \"$title\" de $artist.",
@@ -170,7 +169,7 @@ object DjManager : TextToSpeech.OnInitListener {
             !album.isNullOrBlank() && Math.random() < 0.55 -> {
                 val y = year?.takeIf { it.length == 4 }?.let { " ($it)" } ?: ""
                 parts += if (es) {
-                    "Es del álbum \"$album\"$y."
+                    "Es del album \"$album\"$y."
                 } else {
                     "It's from the album \"$album\"$y."
                 }
@@ -191,7 +190,6 @@ object DjManager : TextToSpeech.OnInitListener {
     private fun speak(text: String) {
         val engine = tts ?: return
         if (!ready) return
-
         engine.stop()
 
         val params = Bundle()
