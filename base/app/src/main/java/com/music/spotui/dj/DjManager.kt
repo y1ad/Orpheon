@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 package com.music.spotui.dj
 
-import android.content.Context
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
@@ -44,12 +43,12 @@ object DjManager : TextToSpeech.OnInitListener {
     }
 
     var djName by mutableStateOf(
-        Graph.app.getSharedPreferences(PREFS, 0).getString(KEY_NAME, null) ?: "Livi"
+        Graph.app.getSharedPreferences(PREFS, 0).getString(KEY_NAME, null) ?: "Dj Eyal"
     )
         private set
 
     fun setDjName(value: String) {
-        val clean = value.trim().ifEmpty { "Livi" }
+        val clean = value.trim().ifEmpty { "Dj Eyal" }
         djName = clean
         Graph.app.getSharedPreferences(PREFS, 0).edit().putString(KEY_NAME, clean).apply()
     }
@@ -101,11 +100,6 @@ object DjManager : TextToSpeech.OnInitListener {
 
     /**
      * Called when a new track starts playing.
-     * @param title song title
-     * @param artist primary artist
-     * @param album optional album name
-      * @param year optional release year
-      * @param bpm optional tempo (from analysis or metadata)
      */
     fun onTrackStarted(
         title: String?,
@@ -117,6 +111,7 @@ object DjManager : TextToSpeech.OnInitListener {
         if (!enabled) return
         ensureTts()
         if (!ready) return
+
         songCount++
         val now = System.currentTimeMillis()
         val shouldGreet = now - lastGreeted > 6 * 3600_000L // every 6 hours
@@ -151,13 +146,12 @@ object DjManager : TextToSpeech.OnInitListener {
 
         if (greet) {
             parts += if (es) {
-                "Hola, soy $djName. Te voy a acompanar con la mõsica."
+                "Hola, soy $djName. Te voy a acompanar con la música."
             } else {
                 "Hi, I'm $djName. I'll be keeping you company with the music."
             }
-        }
+    }
 
-        // Intro
         val introsEs = listOf(
             "Ahora suena \"$title\" de $artist.",
             "Esta es \"$title\", de $artist.",
@@ -172,12 +166,11 @@ object DjManager : TextToSpeech.OnInitListener {
         )
         parts += (if (es) introsEs else introsEn).random()
 
-        // Optional fact
         when {
             !album.isNullOrBlank() && Math.random() < 0.55 -> {
                 val y = year?.takeIf { it.length == 4 }?.let { " ($it)" } ?: ""
                 parts += if (es) {
-                    "Es del album \"$album\"$y."
+                    "Es del álbum \"$album\"$y."
                 } else {
                     "It's from the album \"$album\"$y."
                 }
@@ -198,7 +191,7 @@ object DjManager : TextToSpeech.OnInitListener {
     private fun speak(text: String) {
         val engine = tts ?: return
         if (!ready) return
-        // Stop any ongoing speech so we don't queue too much
+
         engine.stop()
 
         val params = Bundle()
@@ -207,9 +200,9 @@ object DjManager : TextToSpeech.OnInitListener {
         engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {}
             override fun onDone(utteranceId: String?) {}
-            @Deprecated("Deprecated in Java")
-            override fun onError(utteranceId: String?) {}
-            override fun onError(utteranceId: String?, errorCode: Int) {}
+           @Deprecated("Deprecated in Java")
+           override fun onError(utteranceId: String?) {}
+           override fun onError(utteranceId: String?, errorCode: Int) {}
         })
 
         engine.speak(text, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
