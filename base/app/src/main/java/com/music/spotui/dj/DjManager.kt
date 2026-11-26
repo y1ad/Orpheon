@@ -35,42 +35,45 @@ object DjManager : TextToSpeech.OnInitListener {
         null
     }
 
+    // Backing state is private; the public properties are read-only so their JVM
+    // getters/setters do not clash with the explicit setEnabled/setDjName/setChatty functions.
+    private var enabledState by mutableStateOf(true)
+    private var djNameState by mutableStateOf("Dj Eyal")
+    private var chattyState by mutableStateOf(3)
+
     /** Whether the native DJ is enabled. Default: on. */
-    var enabled by mutableStateOf(true)
-        private set
+    val enabled: Boolean get() = enabledState
+
+    val djName: String get() = djNameState
+
+    /** How often the DJ talks: 1 = every song, 3, 5. */
+    val chatty: Int get() = chattyState
 
     fun setEnabled(value: Boolean) {
-        enabled = value
+        enabledState = value
         prefs()?.edit()?.putBoolean(KEY_ENABLED, value)?.apply()
         if (value) ensureTts() else shutdown()
     }
 
-    var djName by mutableStateOf("Dj Eyal")
-        private set
-
     fun setDjName(value: String) {
         val clean = value.trim().ifEmpty { "Dj Eyal" }
-        djName = clean
+        djNameState = clean
         prefs()?.edit()?.putString(KEY_NAME, clean)?.apply()
     }
 
-    /** How often the DJ talks: 1 = every song, 3, 5. */
-    var chatty by mutableStateOf(3)
-        private set
-
     fun setChatty(value: Int) {
         val v = value.coerceIn(1, 5)
-        chatty = v
+        chattyState = v
         prefs()?.edit()?.putInt(KEY_CHATTY, v)?.apply()
     }
 
     /** Load persisted prefs once Graph is ready (call from Application or first play). */
     fun loadPrefs() {
         val p = prefs() ?: return
-        enabled = p.getBoolean(KEY_ENABLED, true)
-        djName = p.getString(KEY_NAME, null)?.takeIf { it.isNotBlank() } ?: "Dj Eyal"
-        chatty = p.getInt(KEY_CHATTY, 3).coerceIn(1, 5)
-        if (enabled) ensureTts()
+        enabledState = p.getBoolean(KEY_ENABLED, true)
+        djNameState = p.getString(KEY_NAME, null)?.takeIf { it.isNotBlank() } ?: "Dj Eyal"
+        chattyState = p.getInt(KEY_CHATTY, 3).coerceIn(1, 5)
+        if (enabledState) ensureTts()
     }
 
     private fun ensureTts() {
@@ -119,7 +122,7 @@ object DjManager : TextToSpeech.OnInitListener {
         year: String? = null,
         bpm: Float? = null
     ) {
-        if (!enabled) return
+        if (!enabledState) return
         ensureTts()
         if (!ready) {
             // TTS still initializing; skip this one rather than crash
@@ -129,7 +132,7 @@ object DjManager : TextToSpeech.OnInitListener {
         songCount++
         val now = System.currentTimeMillis()
         val shouldGreet = now - lastGreeted > 6 * 3600_000L
-        val shouldTalk = shouldGreet || (songCount - 1) % chatty == 0
+        val shouldTalk = shouldGreet || (songCount - 1) % chattyState == 0
 
         if (!shouldTalk) return
         if (shouldGreet) lastGreeted = now
@@ -161,9 +164,9 @@ object DjManager : TextToSpeech.OnInitListener {
 
         if (greet) {
             parts += if (es) {
-                "Hola, soy $djName. Te voy a acompaniar con la musica."
+                "Hola, soy $djNameState. Te voy a acompaniar con la musica."
             } else {
-                "Hi, I'm $djName. I'll be keeping you company with the music."
+                "Hi, I'm $djNameState. I'll be keeping you company with the music."
             }
         }
 
@@ -223,7 +226,7 @@ object DjManager : TextToSpeech.OnInitListener {
     }
 
     fun say(text: String) {
-        if (!enabled) return
+        if (!enabledState) return
         ensureTts()
         speak(text)
     }
