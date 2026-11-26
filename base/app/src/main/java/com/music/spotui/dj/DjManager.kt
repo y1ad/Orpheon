@@ -74,7 +74,7 @@ object DjManager : TextToSpeech.OnInitListener {
     }
 
     private fun ensureTts() {
-       if (tts != null) return
+        if (tts != null) return
         try {
             tts = TextToSpeech(Graph.app, this)
         } catch (_: Exception) {
@@ -134,15 +134,18 @@ object DjManager : TextToSpeech.OnInitListener {
         if (!shouldTalk) return
         if (shouldGreet) lastGreeted = now
 
+        val safeTitle = title?.takeIf { it.isNotBlank() } ?: return
+        val safeArtist = artist?.takeIf { it.isNotBlank() } ?: ""
+
         val text = buildComment(
-            title = title?.takeIf { it.isNotBlank } ?: return,
-            artist = artist?.takeIf { it.isNotBlank } ?: "",
+            title = safeTitle,
+            artist = safeArtist,
             album = album,
             year = year,
             bpm = bpm,
             greet = shouldGreet
         )
-        speak( text )
+        speak(text)
     }
 
     private fun buildComment(
@@ -212,8 +215,8 @@ object DjManager : TextToSpeech.OnInitListener {
             override fun onStart(utteranceId: String?) {}
             override fun onDone(utteranceId: String?) {}
             @Deprecated("Deprecated in Java")
-           override fun onError(utteranceId: String?) {}
-           override fun onError(utteranceId: String?, errorCode: Int) {}
+            override fun onError(utteranceId: String?) {}
+            override fun onError(utteranceId: String?, errorCode: Int) {}
         })
 
         engine.speak(text, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
