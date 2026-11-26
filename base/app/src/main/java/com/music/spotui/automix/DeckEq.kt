@@ -11,7 +11,7 @@ import app.myspoti.automix.Features
  * when the phone refuses the effect: the mixes then use the gains alone.
  */
 class DeckEq private constructor(private val dp: DynamicsProcessing) {
-    private var low = 0f; private var high = 0f
+    private var low = 0f; private var mid = 0f; private var high = 0f
 
     /** Band levels in dB (0 = untouched, down to −30). */
     fun set(lowDb: Double, highDb: Double) {
@@ -24,7 +24,27 @@ class DeckEq private constructor(private val dp: DynamicsProcessing) {
         }
     }
 
-    fun neutral() = set(0.0, 0.0)
+    /**
+     * The three bands at once, in dB (0 = untouched, down to −40), the mid one included: the DJ sweep
+     * transition closes (or opens) a filter by taking the highs, then the mids, then the lows down.
+     */
+    fun setBands(lowDb: Double, midDb: Double, highDb: Double) {
+        val l = lowDb.toFloat().coerceIn(-40f, 0f)
+        val m = midDb.toFloat().coerceIn(-40f, 0f)
+        val h = highDb.toFloat().coerceIn(-40f, 0f)
+        val dl = kotlin.math.abs(l - low) >= 0.25f
+        val dm = kotlin.math.abs(m - mid) >= 0.25f
+        val dh = kotlin.math.abs(h - high) >= 0.25f
+        if (!dl && !dm && !dh) return
+        runCatching {
+            if (dl) dp.setPreEqBandAllChannelsTo(0, DynamicsProcessing.EqBand(true, Features.LOW_HZ.toFloat(), l))
+            if (dm) dp.setPreEqBandAllChannelsTo(1, DynamicsProcessing.EqBand(true, Features.HIGH_HZ.toFloat(), m))
+            if (dh) dp.setPreEqBandAllChannelsTo(2, DynamicsProcessing.EqBand(true, 20_000f, h))
+            low = l; mid = m; high = h
+        }
+    }
+
+    fun neutral() = setBands(0.0, 0.0, 0.0)
 
     fun release() { runCatching { dp.release() } }
 
